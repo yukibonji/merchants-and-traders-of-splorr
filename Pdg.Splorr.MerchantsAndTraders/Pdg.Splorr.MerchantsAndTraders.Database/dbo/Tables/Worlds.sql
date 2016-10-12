@@ -1,0 +1,8 @@
+﻿CREATE TABLE [dbo].[Worlds]
+(
+	[WorldId] INT IDENTITY(1,1) NOT NULL,
+	[WorldName] NVARCHAR(50) NOT NULL,
+	[CreatedOn] DATETIMEOFFSET NOT NULL CONSTRAINT [DF_Worlds_CreatedOn] DEFAULT SYSDATETIMEOFFSET(), 
+    CONSTRAINT [PK_Worlds] PRIMARY KEY([WorldId]),
+	CONSTRAINT [UQ_Worlds_WorldName] UNIQUE([WorldName])
+)
