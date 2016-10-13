@@ -10,31 +10,25 @@ open Pdg.Splorr.MerchantsAndTraders.Web.Models
 
 type Startup() =
     member this.ConfigureAuth(app:IAppBuilder) =
-        app.CreatePerOwinContext<ApplicationDbContext>(ApplicationDbContext.Create)
-        |> ignore
+        app
+            .CreatePerOwinContext(ApplicationDbContext.Create)
+            .CreatePerOwinContext(ApplicationUserManager.Create)
+            .CreatePerOwinContext(ApplicationSignInManager.Create)
+            .UseCookieAuthentication(
+                CookieAuthenticationOptions(
+                    AuthenticationType=DefaultAuthenticationTypes.ApplicationCookie,
+                    LoginPath = PathString("/Account/Login"),
+                    Provider = CookieAuthenticationProvider(
+                        OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<ApplicationUserManager, ApplicationUser>(
+                            validateInterval= TimeSpan.FromMinutes(30.0),
+                            regenerateIdentity= fun manager user -> user.GenerateUserIdentityAsync(manager))
+                        )
+                    ))
+            .UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie)
 
-        app.CreatePerOwinContext<ApplicationUserManager>(fun (o,c) -> ApplicationUserManager.Create(o,c))
-        |> ignore
+        app.UseTwoFactorSignInCookie(DefaultAuthenticationTypes.TwoFactorCookie, TimeSpan.FromMinutes(5.0))
 
-        app.CreatePerOwinContext(ApplicationSignInManager.Create)
-
-        app.UseCookieAuthentication(
-            CookieAuthenticationOptions(
-                AuthenticationType=DefaultAuthenticationTypes.ApplicationCookie,
-                LoginPath = PathString("/Account/Login"),
-                Provider = CookieAuthenticationProvider(
-                    OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<ApplicationUserManager, ApplicationUser>(
-                        validateInterval= TimeSpan.FromMinutes(30),
-                        regenerateIdentity= fun (manager, user) -> user.GenerateUserIdentityAsync(manager))
-                    )
-                ))
-        |> ignore
-
-        app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
-
-        app.UseTwoFactorSignInCookie(DefaultAuthenticationTypes.TwoFactorCookie, TimeSpan.FromMinutes(5.0));
-
-        app.UseTwoFactorRememberBrowserCookie(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie);
+        app.UseTwoFactorRememberBrowserCookie(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie)
 
     member this.Configuration (app:IAppBuilder) =
         this.ConfigureAuth(app)
