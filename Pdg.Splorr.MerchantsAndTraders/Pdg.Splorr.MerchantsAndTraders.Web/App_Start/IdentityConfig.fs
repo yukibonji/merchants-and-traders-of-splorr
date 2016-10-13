@@ -38,7 +38,7 @@ type SmsService() =
 type ApplicationUserManager(store:IUserStore<ApplicationUser>) =
     inherit UserManager<ApplicationUser>(store)
 
-    static member Create (options:IdentityFactoryOptions<ApplicationUserManager>) (context:IOwinContext):ApplicationUserManager =
+    static member CreateManager (options:IdentityFactoryOptions<ApplicationUserManager>) (context:IOwinContext):ApplicationUserManager =
             let manager =
                 new ApplicationUserManager(new UserStore<ApplicationUser>(context.Get<ApplicationDbContext>()))
 
@@ -70,6 +70,6 @@ type ApplicationSignInManager( userManager:ApplicationUserManager,  authenticati
     override this.CreateUserIdentityAsync(user:ApplicationUser) =
         user.GenerateUserIdentityAsync(this.UserManager :?> UserManager<ApplicationUser>)
 
-    static member Create(options:IdentityFactoryOptions<ApplicationSignInManager>) (context:IOwinContext) :ApplicationSignInManager =
+    static member CreateManager(options:IdentityFactoryOptions<ApplicationSignInManager>) (context:IOwinContext) :ApplicationSignInManager =
         new ApplicationSignInManager(context.GetUserManager<ApplicationUserManager>(), context.Authentication)
 

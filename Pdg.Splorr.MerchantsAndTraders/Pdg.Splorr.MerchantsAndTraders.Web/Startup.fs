@@ -12,8 +12,8 @@ type Startup() =
     member this.ConfigureAuth(app:IAppBuilder) =
         app
             .CreatePerOwinContext(ApplicationDbContext.Create)
-            .CreatePerOwinContext(ApplicationUserManager.Create)
-            .CreatePerOwinContext(ApplicationSignInManager.Create)
+            .CreatePerOwinContext(ApplicationUserManager.CreateManager)
+            .CreatePerOwinContext(ApplicationSignInManager.CreateManager)
             .UseCookieAuthentication(
                 CookieAuthenticationOptions(
                     AuthenticationType=DefaultAuthenticationTypes.ApplicationCookie,
