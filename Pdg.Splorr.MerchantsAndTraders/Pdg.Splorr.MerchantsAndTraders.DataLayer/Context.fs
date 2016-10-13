@@ -5,13 +5,11 @@ open System
 
 module Constants =
     let [<Literal>] connectionString="Initial Catalog=MerchantsAndTraders;Data Source=(local);Integrated Security=True"
-    let [<Literal>] resolutionPath = __SOURCE_DIRECTORY__
 
 type MaToSplorrProvider = 
     SqlDataProvider<
         Common.DatabaseProviderTypes.MSSQLSERVER,
         Constants.connectionString,
-        ResolutionPath = Constants.resolutionPath,
         UseOptionTypes = true>
 
 module Context =
