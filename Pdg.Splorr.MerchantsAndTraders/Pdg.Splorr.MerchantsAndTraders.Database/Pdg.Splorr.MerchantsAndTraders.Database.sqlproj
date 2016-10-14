@@ -68,5 +68,9 @@
     <Build Include="dbo\Tables\AspNetRoles.sql" />
     <Build Include="dbo\Tables\__MigrationHistory.sql" />
     <Build Include="dbo\Tables\Worlds.sql" />
+    <Build Include="dbo\Tables\Players.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="Pdg.Splorr.MerchantsAndTraders.Database.refactorlog" />
   </ItemGroup>
 </Project>
