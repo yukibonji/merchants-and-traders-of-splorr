@@ -22,8 +22,22 @@ type WorldListItem =
     CreatedOn:DateTimeOffset}
 
 module Worlds =
-    let fetch (context:MaToSplorrProvider.dataContext) =
+    let fetchList (context:MaToSplorrProvider.dataContext) =
         query{
             for world in context.Dbo.Worlds do
             select ({WorldListItem.WorldId=world.WorldId;WorldName=world.WorldName;CreatedOn=world.CreatedOn})
+        }
+
+type PlayerListItem =
+    {PlayerId:int;
+    WorldId:int;
+    WorldName:string}
+
+module Players =
+    let fetchList (context:MaToSplorrProvider.dataContext) (userId: string) =
+        query{
+            for player in context.Dbo.Players do
+                join world in context.Dbo.Worlds on (player.WorldId=world.WorldId)
+                where (player.UserId=userId)
+                select ({PlayerListItem.PlayerId = player.PlayerId; WorldId=player.WorldId; WorldName = world.WorldName})
         }
