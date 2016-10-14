@@ -80,3 +80,11 @@ type SendCodeViewModel () =
     member val Providers = Seq.empty<System.Web.Mvc.SelectListItem> with get,set
     member val ReturnUrl = String.Empty with get,set
     member val RememberMe = false with get,set
+
+type ExternalLoginConfirmationViewModel() =
+    [<Required>]
+    [<Display(Name = "Email")>]
+    member val Email = String.Empty with get,set
+
+type ExternalLoginListViewModel() =
+    member val ReturnUrl = String.Empty with get,set

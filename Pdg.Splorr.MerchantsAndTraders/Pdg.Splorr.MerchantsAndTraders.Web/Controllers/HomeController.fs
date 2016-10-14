@@ -8,6 +8,7 @@ open System.Web.Mvc
 open System.Web.Mvc.Ajax
 open Pdg.Splorr.MerchantsAndTraders.DataLayer
 
+[<Authorize>]
 type HomeController() =
     inherit Controller()
 

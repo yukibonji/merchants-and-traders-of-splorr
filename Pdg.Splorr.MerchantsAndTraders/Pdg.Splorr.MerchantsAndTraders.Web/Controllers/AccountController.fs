@@ -35,7 +35,7 @@ type internal ChallengeResult(provider:string, redirectUri:string, userId:string
             properties.Dictionary.["XsrfId"] <- this.UserId
         context.HttpContext.GetOwinContext().Authentication.Challenge(properties, this.LoginProvider);
 
-
+[<Authorize>]
 type AccountController() =
     inherit Controller()
 
@@ -225,143 +225,98 @@ type AccountController() =
                 |> Seq.map (fun purpose -> new SelectListItem(Text = purpose, Value = purpose));
             this.View(new SendCodeViewModel(Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe)) :> ActionResult
 
-//
-//        //
-//        // POST: /Account/SendCode
-//        [HttpPost]
-//        [AllowAnonymous]
-//        [ValidateAntiForgeryToken]
-//        public async Task<ActionResult> SendCode(SendCodeViewModel model)
-//        {
-//            if (!ModelState.IsValid)
-//            {
-//                return View();
-//            }
-//
-//            // Generate the token and send it
-//            if (!await SignInManager.SendTwoFactorCodeAsync(model.SelectedProvider))
-//            {
-//                return View("Error");
-//            }
-//            return RedirectToAction("VerifyCode", new { Provider = model.SelectedProvider, ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
-//        }
-//
-//        //
-//        // GET: /Account/ExternalLoginCallback
-//        [AllowAnonymous]
-//        public async Task<ActionResult> ExternalLoginCallback(string returnUrl)
-//        {
-//            var loginInfo = await AuthenticationManager.GetExternalLoginInfoAsync();
-//            if (loginInfo == null)
-//            {
-//                return RedirectToAction("Login");
-//            }
-//
-//            // Sign in the user with this external login provider if the user already has a login
-//            var result = await SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
-//            switch (result)
-//            {
-//                case SignInStatus.Success:
-//                    return RedirectToLocal(returnUrl);
-//                case SignInStatus.LockedOut:
-//                    return View("Lockout");
-//                case SignInStatus.RequiresVerification:
-//                    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
-//                case SignInStatus.Failure:
-//                default:
-//                    // If the user does not have an account, then prompt the user to create an account
-//                    ViewBag.ReturnUrl = returnUrl;
-//                    ViewBag.LoginProvider = loginInfo.Login.LoginProvider;
-//                    return View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel { Email = loginInfo.Email });
-//            }
-//        }
-//
-//        //
-//        // POST: /Account/ExternalLoginConfirmation
-//        [HttpPost]
-//        [AllowAnonymous]
-//        [ValidateAntiForgeryToken]
-//        public async Task<ActionResult> ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model, string returnUrl)
-//        {
-//            if (User.Identity.IsAuthenticated)
-//            {
-//                return RedirectToAction("Index", "Manage");
-//            }
-//
-//            if (ModelState.IsValid)
-//            {
-//                // Get the information about the user from the external login provider
-//                var info = await AuthenticationManager.GetExternalLoginInfoAsync();
-//                if (info == null)
-//                {
-//                    return View("ExternalLoginFailure");
-//                }
-//                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-//                var result = await UserManager.CreateAsync(user);
-//                if (result.Succeeded)
-//                {
-//                    result = await UserManager.AddLoginAsync(user.Id, info.Login);
-//                    if (result.Succeeded)
-//                    {
-//                        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-//                        return RedirectToLocal(returnUrl);
-//                    }
-//                }
-//                AddErrors(result);
-//            }
-//
-//            ViewBag.ReturnUrl = returnUrl;
-//            return View(model);
-//        }
-//
-//        //
-//        // POST: /Account/LogOff
-//        [HttpPost]
-//        [ValidateAntiForgeryToken]
-//        public ActionResult LogOff()
-//        {
-//            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
-//            return RedirectToAction("Index", "Home");
-//        }
+    [<HttpPost>]
+    [<AllowAnonymous>]
+    [<ValidateAntiForgeryToken>]
+    member this.SendCode(model:SendCodeViewModel):ActionResult =
+        if this.ModelState.IsValid |> not then
+            this.View() :> ActionResult
+        else
+            if this.SignInManager.SendTwoFactorCode(model.SelectedProvider) |> not then
+                this.View("Error") :> ActionResult
+            else
+                let rvd = new RouteValueDictionary()
+                rvd.Add("Provider",model.SelectedProvider)
+                rvd.Add("ReturnUrl",model.ReturnUrl)
+                rvd.Add("RememberMe",model.RememberMe)
+                this.RedirectToAction("VerifyCode", rvd) :> ActionResult
+
+    member this.AuthenticationManager
+        with get() =
+            this.HttpContext.GetOwinContext().Authentication
+
+    [<AllowAnonymous>]
+    member this.ExternalLoginCallback(returnUrl:string) :ActionResult =
+        let loginInfo = this.AuthenticationManager.GetExternalLoginInfo();
+        if loginInfo = null then
+            this.RedirectToAction("Login") :> ActionResult
+        else
+            let result = this.SignInManager.ExternalSignIn(loginInfo, isPersistent= false)
+            match result with
+            | SignInStatus.Success ->
+                this.RedirectToLocal(returnUrl)
+            | SignInStatus.LockedOut ->
+                this.View("Lockout") :> ActionResult
+            | SignInStatus.RequiresVerification ->
+                let rvd = new RouteValueDictionary()
+                rvd.Add("ReturnUrl", returnUrl)
+                rvd.Add("RememberMe", false)
+                this.RedirectToAction("SendCode", rvd) :> ActionResult
+            | _ ->
+                this.ViewData.Add("ReturnUrl", returnUrl)
+                this.ViewData.Add("LoginProvider", loginInfo.Login.LoginProvider)
+                this.View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel(Email = loginInfo.Email)) :> ActionResult
+
+    [<HttpPost>]
+    [<AllowAnonymous>]
+    [<ValidateAntiForgeryToken>]
+    member this.ExternalLoginConfirmation(model:ExternalLoginConfirmationViewModel, returnUrl:string):ActionResult=
+        if this.User.Identity.IsAuthenticated then
+            this.RedirectToAction("Index", "Manage") :> ActionResult
+        else
+            if this.ModelState.IsValid then
+                let info = this.AuthenticationManager.GetExternalLoginInfo();
+                if info = null then
+                    this.View("ExternalLoginFailure") :> ActionResult
+                else
+                    let user = new ApplicationUser(UserName = model.Email, Email = model.Email)
+                    let result = this.UserManager.Create(user)
+                    if result.Succeeded then
+                        let result = this.UserManager.AddLogin(user.Id, info.Login)
+                        if result.Succeeded then
+                            this.SignInManager.SignIn(user, isPersistent= false, rememberBrowser= false)
+                            this.RedirectToLocal(returnUrl)
+                        else
+                            this.AddErrors(result);
+                            this.ViewData.Add("ReturnUrl",returnUrl)
+                            this.View(model) :> ActionResult
+                    else
+                        this.AddErrors(result);
+                        this.ViewData.Add("ReturnUrl",returnUrl)
+                        this.View(model) :> ActionResult
+            else
+                this.ViewData.Add("ReturnUrl",returnUrl)
+                this.View(model) :> ActionResult
+
+    [<HttpPost>]
+    [<ValidateAntiForgeryToken>]
+    member this.LogOff() : ActionResult =
+        this.AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie)
+        this.RedirectToAction("Index", "Home") :> ActionResult
 
     [<AllowAnonymous>]
     member this.ExternalLoginFailure() : ActionResult =
         this.View() :> ActionResult
-//
-//        protected override void Dispose(bool disposing)
-//        {
-//            if (disposing)
-//            {
-//                if (_userManager != null)
-//                {
-//                    _userManager.Dispose();
-//                    _userManager = null;
-//                }
-//
-//                if (_signInManager != null)
-//                {
-//                    _signInManager.Dispose();
-//                    _signInManager = null;
-//                }
-//            }
-//
-//            base.Dispose(disposing);
-//        }
-//
-//        #region Helpers
-//        // Used for XSRF protection when adding external logins
-//        private const string XsrfKey = "XsrfId";
-//
-//        private IAuthenticationManager AuthenticationManager
-//        {
-//            get
-//            {
-//                return HttpContext.GetOwinContext().Authentication;
-//            }
-//        }
-//
-//
-//
-//        #endregion
-//    }
+
+    override this.Dispose(disposing:bool):unit =
+        if disposing then
+            if this._userManager <> null then
+                this._userManager.Dispose()
+                this._userManager <- null
+
+            if this._signInManager <> null then
+                this._signInManager.Dispose()
+                this._signInManager <- null
+
+        base.Dispose(disposing)
 
