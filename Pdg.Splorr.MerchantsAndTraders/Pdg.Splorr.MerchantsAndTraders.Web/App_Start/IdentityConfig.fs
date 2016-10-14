@@ -13,6 +13,7 @@ open Microsoft.AspNet.Identity.Owin
 open Microsoft.Owin
 open Microsoft.Owin.Security
 
+[<AllowNullLiteral>]
 type ApplicationUser() =
     inherit IdentityUser()
 
@@ -35,6 +36,7 @@ type SmsService() =
         member this.SendAsync(message:IdentityMessage): Task =
             Task.FromResult(0) :> Task
 
+[<AllowNullLiteral>]
 type ApplicationUserManager(store:IUserStore<ApplicationUser>) =
     inherit UserManager<ApplicationUser>(store)
 
@@ -64,6 +66,7 @@ type ApplicationUserManager(store:IUserStore<ApplicationUser>) =
 
             manager
 
+[<AllowNullLiteral>]
 type ApplicationSignInManager( userManager:ApplicationUserManager,  authenticationManager:IAuthenticationManager) =
     inherit SignInManager<ApplicationUser, string>(userManager, authenticationManager)
     

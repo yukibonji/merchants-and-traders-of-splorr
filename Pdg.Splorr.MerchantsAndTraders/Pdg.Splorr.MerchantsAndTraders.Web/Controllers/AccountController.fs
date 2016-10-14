@@ -16,6 +16,26 @@ open Pdg.Splorr.MerchantsAndTraders.Web
 open Pdg.Splorr.MerchantsAndTraders.Web.Models
 open FSharp.Interop.Dynamic
 
+type internal ChallengeResult(provider:string, redirectUri:string, userId:string) as this=
+
+    inherit HttpUnauthorizedResult()
+
+    do
+        this.LoginProvider <- provider
+        this.RedirectUri <- redirectUri
+        this.UserId <- userId
+
+    member val LoginProvider = String.Empty with get,set
+    member val RedirectUri = String.Empty with get,set
+    member val UserId = String.Empty with get,set
+
+    override this.ExecuteResult(context:ControllerContext) : unit =
+        let properties = new AuthenticationProperties(RedirectUri = this.RedirectUri)
+        if this.UserId <> null then
+            properties.Dictionary.["XsrfId"] <- this.UserId
+        context.HttpContext.GetOwinContext().Authentication.Challenge(properties, this.LoginProvider);
+
+
 type AccountController() =
     inherit Controller()
 
@@ -24,7 +44,7 @@ type AccountController() =
 
     member this.SignInManager 
         with public get() = 
-            if obj.ReferenceEquals(this._signInManager, null) |> not then 
+            if this._signInManager<> null then 
                 this._signInManager 
             else 
                 this.HttpContext.GetOwinContext().Get<ApplicationSignInManager>()
@@ -34,7 +54,7 @@ type AccountController() =
 
     member this.UserManager 
         with public get() = 
-            if obj.ReferenceEquals(this._userManager, null) |> not then 
+            if this._userManager <> null then 
                 this._userManager 
             else 
                 this.HttpContext.GetOwinContext().Get<ApplicationUserManager>()
@@ -132,7 +152,7 @@ type AccountController() =
 
     [<AllowAnonymous>]
     member this.ConfirmEmail(userId:string, code:string) : ActionResult =
-        if obj.ReferenceEquals(userId,null) || obj.ReferenceEquals(code,null) then
+        if userId = null || code = null then
             this.View("Error") :> ActionResult
         else
             let result = this.UserManager.ConfirmEmail(userId, code)
@@ -148,7 +168,8 @@ type AccountController() =
     member this.ForgotPassword(model:ForgotPasswordViewModel) : ActionResult =
         if this.ModelState.IsValid then
             let user = this.UserManager.FindByName(model.Email)
-            if obj.ReferenceEquals(user,null) || (this.UserManager.IsEmailConfirmed(user.Id)|> not) then
+
+            if user = null || (this.UserManager.IsEmailConfirmed(user.Id)|> not) then
                 this.View("ForgotPasswordConfirmation") :> ActionResult
             else
                 this.View(model) :> ActionResult
@@ -161,7 +182,7 @@ type AccountController() =
 
     [<AllowAnonymous>]
     member this.ResetPassword(code:string) : ActionResult =
-        (if obj.ReferenceEquals(code,null) then this.View("Error") else this.View()) :> ActionResult
+        (if code = null then this.View("Error") else this.View()) :> ActionResult
 
     [<HttpPost>]
     [<AllowAnonymous>]
@@ -171,7 +192,7 @@ type AccountController() =
             this.View(model) :> ActionResult
         else
             let user = this.UserManager.FindByName(model.Email);
-            if obj.ReferenceEquals(user,null) then
+            if user = null then
                 this.RedirectToAction("ResetPasswordConfirmation", "Account") :> ActionResult
             else
                 let result = this.UserManager.ResetPassword(user.Id, model.Code, model.Password)
@@ -185,29 +206,25 @@ type AccountController() =
     member this.ResetPasswordConfirmation() : ActionResult =
         this.View() :> ActionResult
 
-//        [HttpPost]
-//        [AllowAnonymous]
-//        [ValidateAntiForgeryToken]
-//        public ActionResult ExternalLogin(string provider, string returnUrl)
-//        {
-//            // Request a redirect to the external login provider
-//            return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl }));
-//        }
-//
-//        //
-//        // GET: /Account/SendCode
-//        [AllowAnonymous]
-//        public async Task<ActionResult> SendCode(string returnUrl, bool rememberMe)
-//        {
-//            var userId = await SignInManager.GetVerifiedUserIdAsync();
-//            if (userId == null)
-//            {
-//                return View("Error");
-//            }
-//            var userFactors = await UserManager.GetValidTwoFactorProvidersAsync(userId);
-//            var factorOptions = userFactors.Select(purpose => new SelectListItem { Text = purpose, Value = purpose }).ToList();
-//            return View(new SendCodeViewModel { Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe });
-//        }
+    [<HttpPost>]
+    [<AllowAnonymous>]
+    [<ValidateAntiForgeryToken>]
+    member this.ExternalLogin(provider:string, returnUrl:string):ActionResult =
+        let rvd = new RouteValueDictionary()
+        rvd.Add("ReturnUrl",returnUrl)
+        new ChallengeResult(provider, this.Url.Action("ExternalLoginCallback", "Account", rvd), null) :> ActionResult
+
+    [<AllowAnonymous>]
+    member this.SendCode(returnUrl:string, rememberMe:bool) :ActionResult =
+        let userId = this.SignInManager.GetVerifiedUserId()
+        if userId = null then
+            this.View("Error") :> ActionResult
+        else
+            let factorOptions = 
+                this.UserManager.GetValidTwoFactorProviders(userId)
+                |> Seq.map (fun purpose -> new SelectListItem(Text = purpose, Value = purpose));
+            this.View(new SendCodeViewModel(Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe)) :> ActionResult
+
 //
 //        //
 //        // POST: /Account/SendCode

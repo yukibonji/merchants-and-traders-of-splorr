@@ -75,3 +75,8 @@ type ResetPasswordViewModel() =
 
     member val Code = String.Empty with get,set
 
+type SendCodeViewModel () =
+    member val SelectedProvider = String.Empty with get,set
+    member val Providers = Seq.empty<System.Web.Mvc.SelectListItem> with get,set
+    member val ReturnUrl = String.Empty with get,set
+    member val RememberMe = false with get,set
