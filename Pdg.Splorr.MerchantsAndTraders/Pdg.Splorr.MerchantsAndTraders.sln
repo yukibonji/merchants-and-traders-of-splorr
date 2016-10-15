@@ -9,6 +9,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Pdg.Splorr.MerchantsAndTrad
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Pdg.Splorr.MerchantsAndTraders.Web", "Pdg.Splorr.MerchantsAndTraders.Web\Pdg.Splorr.MerchantsAndTraders.Web.fsproj", "{4C7F7F5C-1242-4310-B799-658B5CE62D49}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Pdg.Splorr.MerchantsAndTraders.BusinessLayer", "Pdg.Splorr.MerchantsAndTraders.BusinessLayer\Pdg.Splorr.MerchantsAndTraders.BusinessLayer.fsproj", "{5FAE532D-EC2D-4061-BF03-5513D62EF346}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{4C7F7F5C-1242-4310-B799-658B5CE62D49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C7F7F5C-1242-4310-B799-658B5CE62D49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C7F7F5C-1242-4310-B799-658B5CE62D49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FAE532D-EC2D-4061-BF03-5513D62EF346}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FAE532D-EC2D-4061-BF03-5513D62EF346}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FAE532D-EC2D-4061-BF03-5513D62EF346}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FAE532D-EC2D-4061-BF03-5513D62EF346}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

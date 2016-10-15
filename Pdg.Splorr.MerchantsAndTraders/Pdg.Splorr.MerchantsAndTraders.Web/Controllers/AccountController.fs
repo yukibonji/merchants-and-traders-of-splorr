@@ -16,6 +16,27 @@ open Pdg.Splorr.MerchantsAndTraders.Web
 open Pdg.Splorr.MerchantsAndTraders.Web.Models
 open FSharp.Interop.Dynamic
 
+module PayloadProcess =
+    type Payload<'TEntity> =
+    | InProcess of 'TEntity
+    | Final of ActionResult
+
+    let bind processFunction payload =
+        match payload with
+        | InProcess s -> processFunction s
+        | Final f -> Final f
+
+    let (>>=) payload processFunction =
+        bind processFunction payload
+
+    let finalize (finalizer:'TEntity->ActionResult) (payload:Payload<'TEntity>) : ActionResult =
+        match payload with
+        | InProcess s -> s |> finalizer
+        | Final f -> f
+        
+
+open PayloadProcess
+
 type internal ChallengeResult(provider:string, redirectUri:string, userId:string) as this=
 
     inherit HttpUnauthorizedResult()
@@ -33,7 +54,7 @@ type internal ChallengeResult(provider:string, redirectUri:string, userId:string
         let properties = new AuthenticationProperties(RedirectUri = this.RedirectUri)
         if this.UserId <> null then
             properties.Dictionary.["XsrfId"] <- this.UserId
-        context.HttpContext.GetOwinContext().Authentication.Challenge(properties, this.LoginProvider);
+        context.HttpContext.GetOwinContext().Authentication.Challenge(properties, this.LoginProvider)
 
 [<Authorize>]
 type AccountController() =
@@ -145,7 +166,7 @@ type AccountController() =
                 this.SignInManager.SignIn(user, isPersistent=false, rememberBrowser=false)
                 this.RedirectToAction("Index","Home") :> ActionResult
             else
-                this.AddErrors(result);
+                this.AddErrors(result)
                 this.View(model) :> ActionResult
         else
             this.View(model) :> ActionResult
@@ -191,7 +212,7 @@ type AccountController() =
         if this.ModelState.IsValid |> not then
             this.View(model) :> ActionResult
         else
-            let user = this.UserManager.FindByName(model.Email);
+            let user = this.UserManager.FindByName(model.Email)
             if user = null then
                 this.RedirectToAction("ResetPasswordConfirmation", "Account") :> ActionResult
             else
@@ -222,7 +243,7 @@ type AccountController() =
         else
             let factorOptions = 
                 this.UserManager.GetValidTwoFactorProviders(userId)
-                |> Seq.map (fun purpose -> new SelectListItem(Text = purpose, Value = purpose));
+                |> Seq.map (fun purpose -> new SelectListItem(Text = purpose, Value = purpose))
             this.View(new SendCodeViewModel(Providers = factorOptions, ReturnUrl = returnUrl, RememberMe = rememberMe)) :> ActionResult
 
     [<HttpPost>]
@@ -247,7 +268,7 @@ type AccountController() =
 
     [<AllowAnonymous>]
     member this.ExternalLoginCallback(returnUrl:string) :ActionResult =
-        let loginInfo = this.AuthenticationManager.GetExternalLoginInfo();
+        let loginInfo = this.AuthenticationManager.GetExternalLoginInfo()
         if loginInfo = null then
             this.RedirectToAction("Login") :> ActionResult
         else
@@ -267,36 +288,62 @@ type AccountController() =
                 this.ViewData.Add("LoginProvider", loginInfo.Login.LoginProvider)
                 this.View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel(Email = loginInfo.Email)) :> ActionResult
 
+    member private this.ValidateUserNotAuthenticated x =
+        if this.User.Identity.IsAuthenticated then
+            this.RedirectToAction("Index", "Manage") :> ActionResult
+            |> Final
+        else
+            InProcess x
+
+    member private this.ReturnViewWithErrors<'A, 'TModel when 'TModel :> obj> (result:IdentityResult option, model:'TModel, returnUrl) : Payload<'A> =
+            result
+            |> Option.iter(fun r->this.AddErrors(r))
+            this.ViewData.Add("ReturnUrl",returnUrl)
+            this.View(model) :> ActionResult
+            |> Final
+
+    member private this.ValidateModelStateIsValid<'TModel when 'TModel :> obj> (model:'TModel, returnUrl) =
+        if this.ModelState.IsValid then
+            InProcess (model, returnUrl)
+        else
+            this.ReturnViewWithErrors (None, model, returnUrl)
+            
+    member private this.ValidateExternalLoginInfoRetrievable (model, returnUrl) =
+        let info = this.AuthenticationManager.GetExternalLoginInfo()
+        if info = null then
+            this.View("ExternalLoginFailure") :> ActionResult
+            |> Final
+        else
+            (info, model, returnUrl) |> InProcess
+        
+    member private this.ValidateUserCreatable (info, model:ExternalLoginConfirmationViewModel, returnUrl) =
+        let user = new ApplicationUser(UserName = model.Email, Email = model.Email)
+        let result = this.UserManager.Create(user)
+        if result.Succeeded then
+            (user, info, model, returnUrl) |> InProcess
+        else
+            this.ReturnViewWithErrors (Some result, model, returnUrl)
+
+    member private this.ValidateExternalLoginInfoAttachable (user:ApplicationUser, info:ExternalLoginInfo, model, returnUrl) =
+        let result = this.UserManager.AddLogin(user.Id, info.Login)
+        if result.Succeeded then
+            this.SignInManager.SignIn(user, isPersistent= false, rememberBrowser= false)
+            returnUrl
+            |> InProcess
+        else
+            this.ReturnViewWithErrors (Some result, model, returnUrl)
+
     [<HttpPost>]
     [<AllowAnonymous>]
     [<ValidateAntiForgeryToken>]
     member this.ExternalLoginConfirmation(model:ExternalLoginConfirmationViewModel, returnUrl:string):ActionResult=
-        if this.User.Identity.IsAuthenticated then
-            this.RedirectToAction("Index", "Manage") :> ActionResult
-        else
-            if this.ModelState.IsValid then
-                let info = this.AuthenticationManager.GetExternalLoginInfo();
-                if info = null then
-                    this.View("ExternalLoginFailure") :> ActionResult
-                else
-                    let user = new ApplicationUser(UserName = model.Email, Email = model.Email)
-                    let result = this.UserManager.Create(user)
-                    if result.Succeeded then
-                        let result = this.UserManager.AddLogin(user.Id, info.Login)
-                        if result.Succeeded then
-                            this.SignInManager.SignIn(user, isPersistent= false, rememberBrowser= false)
-                            this.RedirectToLocal(returnUrl)
-                        else
-                            this.AddErrors(result);
-                            this.ViewData.Add("ReturnUrl",returnUrl)
-                            this.View(model) :> ActionResult
-                    else
-                        this.AddErrors(result);
-                        this.ViewData.Add("ReturnUrl",returnUrl)
-                        this.View(model) :> ActionResult
-            else
-                this.ViewData.Add("ReturnUrl",returnUrl)
-                this.View(model) :> ActionResult
+        (model,returnUrl)
+        |> this.ValidateUserNotAuthenticated 
+        >>= this.ValidateModelStateIsValid
+        >>= this.ValidateExternalLoginInfoRetrievable
+        >>= this.ValidateUserCreatable
+        >>= this.ValidateExternalLoginInfoAttachable
+        |> finalize this.RedirectToLocal
 
     [<HttpPost>]
     [<ValidateAntiForgeryToken>]

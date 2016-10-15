@@ -283,6 +283,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Pdg.Splorr.MerchantsAndTraders.BusinessLayer\Pdg.Splorr.MerchantsAndTraders.BusinessLayer.fsproj">
+      <Name>Pdg.Splorr.MerchantsAndTraders.BusinessLayer</Name>
+      <Project>{5fae532d-ec2d-4061-bf03-5513d62ef346}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Pdg.Splorr.MerchantsAndTraders.DataLayer\Pdg.Splorr.MerchantsAndTraders.DataLayer.fsproj">
       <Name>Pdg.Splorr.MerchantsAndTraders.DataLayer</Name>
       <Project>{6282db57-c285-4499-a520-f35feb0ee872}</Project>

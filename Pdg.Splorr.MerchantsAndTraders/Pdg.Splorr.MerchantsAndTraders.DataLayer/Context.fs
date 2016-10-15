@@ -16,28 +16,17 @@ module Context =
     let create () =
         MaToSplorrProvider.GetDataContext();
 
-type WorldListItem =
-    {WorldId:int;
-    WorldName:string;
-    CreatedOn:DateTimeOffset}
-
-module Worlds =
-    let fetchList (context:MaToSplorrProvider.dataContext) =
-        query{
-            for world in context.Dbo.Worlds do
-            select ({WorldListItem.WorldId=world.WorldId;WorldName=world.WorldName;CreatedOn=world.CreatedOn})
-        }
-
-type PlayerListItem =
-    {PlayerId:int;
+type AgentListItem =
+    {AgentId:int;
     WorldId:int;
-    WorldName:string}
+    WorldName:string;
+    AgentName:string}
 
-module Players =
+module Agents =
     let fetchList (context:MaToSplorrProvider.dataContext) (userId: string) =
         query{
-            for player in context.Dbo.Players do
-                join world in context.Dbo.Worlds on (player.WorldId=world.WorldId)
-                where (player.UserId=userId)
-                select ({PlayerListItem.PlayerId = player.PlayerId; WorldId=player.WorldId; WorldName = world.WorldName})
+            for agent in context.Dbo.Agents do
+                join world in context.Dbo.Worlds on (agent.WorldId=world.WorldId)
+                where (agent.UserId=userId)
+                select ({AgentListItem.AgentId = agent.AgentId; WorldId=agent.WorldId; WorldName = world.WorldName;AgentName=agent.AgentName})
         }
