@@ -59,3 +59,11 @@ module AgentRepository =
     let delete (agentId:int)  (context:MaToSplorrProvider.dataContext) : unit =
         let row = context.Dbo.Agents.Single(fun x->x.AgentId = agentId)
         row.Delete()
+        context.SubmitUpdates()
+
+    let update (agent:Agent) (context:MaToSplorrProvider.dataContext) : Agent =
+        let row = context.Dbo.Agents.Single(fun x->x.AgentId = agent.AgentId)
+        row.AgentName <- agent.AgentName
+        context.SubmitUpdates()
+        context
+        |> fetchOne agent.AgentId

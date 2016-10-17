@@ -19,7 +19,7 @@ module AgentService =
         else
             Failure ["Agent already exists for that user and world!"]
 
-    let private verifyAgentDeletable (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
+    let private verifyAgentExists (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
         if AgentRepository.exists agentId context then
             let agent = AgentRepository.fetchOne agentId context
             if agent.UserId = userId then
@@ -40,6 +40,11 @@ module AgentService =
 
         Success ()
 
+    let private updateAgent (agent:Agent) (context:MaToSplorrProvider.dataContext) : ServiceResult<Agent> =
+        context
+        |> AgentRepository.update agent
+        |> Success
+
     let private verifyAgentExistsForUser (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
         if AgentRepository.existsForUserAndWorld userId agentId context then
             Success context
@@ -58,12 +63,14 @@ module AgentService =
 
     let create (agent:Agent) : ServiceResult<Agent> =
         createContext()
+        >>= verifyUserExists agent.UserId
         >>= verifyAgentCreatable agent
         >>= createAgent agent
 
     let delete (userId:string) (agentId:int) : ServiceResult<unit> =
         createContext()
-        >>= verifyAgentDeletable userId agentId
+        >>= verifyUserExists userId
+        >>= verifyAgentExists userId agentId
         >>= removeAgent agentId
 
     let retrieveForEdit (userId:string) (agentId: int) : ServiceResult<Agent> =
@@ -71,3 +78,9 @@ module AgentService =
         >>= verifyUserExists userId
         >>= verifyAgentExistsForUser userId agentId
         >>= retrieveAgent agentId
+
+    let update (agent:Agent) : ServiceResult<Agent> =
+        createContext()
+        >>= verifyUserExists agent.UserId
+        >>= verifyAgentExists agent.UserId agent.AgentId
+        >>= updateAgent agent
