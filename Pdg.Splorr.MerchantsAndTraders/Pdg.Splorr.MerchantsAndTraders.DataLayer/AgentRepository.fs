@@ -1,5 +1,7 @@
 ﻿namespace Pdg.Splorr.MerchantsAndTraders.DataLayer
 
+open System.Linq
+
 type AgentListItem =
     {AgentId:int;
     WorldId:int;
@@ -13,7 +15,7 @@ type Agent =
     WorldId:int}
 
 module AgentRepository =
-    let fetchList (context:MaToSplorrProvider.dataContext) (userId: string) =
+    let fetchList (userId: string) (context:MaToSplorrProvider.dataContext) :IQueryable<AgentListItem> =
         query{
             for agent in context.Dbo.Agents do
             join world in context.Dbo.Worlds on (agent.WorldId=world.WorldId)
@@ -21,7 +23,7 @@ module AgentRepository =
             select ({AgentListItem.AgentId = agent.AgentId; WorldId=agent.WorldId; WorldName = world.WorldName;AgentName=agent.AgentName})
         }
 
-    let fetchOne (context:MaToSplorrProvider.dataContext) (agentId:int) : Agent =
+    let fetchOne (agentId:int) (context:MaToSplorrProvider.dataContext) : Agent =
         query{
             for agent in context.Dbo.Agents do
             where (agent.AgentId=agentId)
@@ -29,10 +31,31 @@ module AgentRepository =
         }
         |> Seq.exactlyOne
 
-    let create (context:MaToSplorrProvider.dataContext) (agent:Agent) : Agent =
+    let exists (agentId:int) (context:MaToSplorrProvider.dataContext) : bool =
+        query{
+            for agent in context.Dbo.Agents do
+            where (agent.AgentId=agentId)
+            select(agent.AgentId)
+        }
+        |> Seq.exists(fun e->true)
+
+    let existsForUserAndWorld (userId:string) (worldId:int) (context:MaToSplorrProvider.dataContext) : bool =
+        query{
+            for agent in context.Dbo.Agents do
+            where (agent.UserId = userId && agent.WorldId = worldId)
+            select (agent.AgentId)
+        }
+        |> Seq.exists(fun e->true)
+
+    let create (agent:Agent) (context:MaToSplorrProvider.dataContext) : Agent =
         let row = context.Dbo.Agents.Create()
         row.AgentName <- agent.AgentName
         row.UserId <- agent.UserId
         row.WorldId <- agent.WorldId
         context.SubmitUpdates()
-        {agent with AgentId=row.AgentId}
+        context
+        |> fetchOne row.AgentId
+
+    let delete (agentId:int)  (context:MaToSplorrProvider.dataContext) : unit =
+        let row = context.Dbo.Agents.Single(fun x->x.AgentId = agentId)
+        row.Delete()

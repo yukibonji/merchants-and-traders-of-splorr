@@ -16,25 +16,6 @@ open Pdg.Splorr.MerchantsAndTraders.Web
 open Pdg.Splorr.MerchantsAndTraders.Web.Models
 open FSharp.Interop.Dynamic
 
-module PayloadProcess =
-    type Payload<'TEntity> =
-    | InProcess of 'TEntity
-    | Final of ActionResult
-
-    let bind processFunction payload =
-        match payload with
-        | InProcess s -> processFunction s
-        | Final f -> Final f
-
-    let (>>=) payload processFunction =
-        bind processFunction payload
-
-    let finalize (finalizer:'TEntity->ActionResult) (payload:Payload<'TEntity>) : ActionResult =
-        match payload with
-        | InProcess s -> s |> finalizer
-        | Final f -> f
-        
-
 open PayloadProcess
 
 type internal ChallengeResult(provider:string, redirectUri:string, userId:string) as this=

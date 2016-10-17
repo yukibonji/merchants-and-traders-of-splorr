@@ -1,0 +1,73 @@
+﻿namespace Pdg.Splorr.MerchantsAndTraders.BusinessLayer
+
+open Pdg.Splorr.MerchantsAndTraders.DataLayer
+open System.Linq
+
+open ServiceResult
+open Utility
+
+module AgentService =
+    let private retrieveAgentList (userId:string) (context:MaToSplorrProvider.dataContext) :ServiceListResult<AgentListItem> =
+        context
+        |> AgentRepository.fetchList userId
+        |> toEnumerable
+        |> Success
+
+    let private verifyAgentCreatable (agent:Agent) (context:MaToSplorrProvider.dataContext) :ServiceResult<MaToSplorrProvider.dataContext> =
+        if AgentRepository.existsForUserAndWorld agent.UserId agent.WorldId context |> not then
+            Success context
+        else
+            Failure ["Agent already exists for that user and world!"]
+
+    let private verifyAgentDeletable (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
+        if AgentRepository.exists agentId context then
+            let agent = AgentRepository.fetchOne agentId context
+            if agent.UserId = userId then
+                Success context
+            else
+                Failure ["Agent not found!"]
+        else
+            Failure ["Agent not found!"]
+
+    let private createAgent (agent:Agent) (context:MaToSplorrProvider.dataContext) : ServiceResult<Agent> =
+        context
+        |> AgentRepository.create agent
+        |> Success
+
+    let private removeAgent (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<unit> =
+        context
+        |> AgentRepository.delete agentId
+
+        Success ()
+
+    let private verifyAgentExistsForUser (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
+        if AgentRepository.existsForUserAndWorld userId agentId context then
+            Success context
+        else
+            Failure ["Agent does not exist for user"]
+
+    let private retrieveAgent (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<Agent> =
+        context
+        |> AgentRepository.fetchOne agentId
+        |> Success
+
+    let retrieveList (userId:string) : ServiceListResult<AgentListItem> =
+        createContext()
+        >>= verifyUserExists userId
+        >>= retrieveAgentList userId
+
+    let create (agent:Agent) : ServiceResult<Agent> =
+        createContext()
+        >>= verifyAgentCreatable agent
+        >>= createAgent agent
+
+    let delete (userId:string) (agentId:int) : ServiceResult<unit> =
+        createContext()
+        >>= verifyAgentDeletable userId agentId
+        >>= removeAgent agentId
+
+    let retrieveForEdit (userId:string) (agentId: int) : ServiceResult<Agent> =
+        createContext()
+        >>= verifyUserExists userId
+        >>= verifyAgentExistsForUser userId agentId
+        >>= retrieveAgent agentId

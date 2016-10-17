@@ -56,6 +56,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="WorldRepository.fs" />
     <Compile Include="AgentRepository.fs" />
+    <Compile Include="UserRepository.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data.SqlProvider">
