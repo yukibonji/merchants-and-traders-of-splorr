@@ -45,12 +45,6 @@ module AgentService =
         |> AgentRepository.update agent
         |> Success
 
-    let private verifyAgentExistsForUser (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
-        if AgentRepository.existsForUserAndWorld userId agentId context then
-            Success context
-        else
-            Failure ["Agent does not exist for user"]
-
     let private retrieveAgent (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<Agent> =
         context
         |> AgentRepository.fetchOne agentId
@@ -73,10 +67,10 @@ module AgentService =
         >>= verifyAgentExists userId agentId
         >>= removeAgent agentId
 
-    let retrieveForEdit (userId:string) (agentId: int) : ServiceResult<Agent> =
+    let retrieve (userId:string) (agentId: int) : ServiceResult<Agent> =
         createContext()
         >>= verifyUserExists userId
-        >>= verifyAgentExistsForUser userId agentId
+        >>= verifyAgentExists userId agentId
         >>= retrieveAgent agentId
 
     let update (agent:Agent) : ServiceResult<Agent> =

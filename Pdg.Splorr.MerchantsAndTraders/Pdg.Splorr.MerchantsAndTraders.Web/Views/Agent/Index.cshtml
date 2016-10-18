@@ -14,7 +14,8 @@
                 <td>
                     @item.AgentName 
                     <a href="@Url.Action("Detail", new { id=item.AgentId })"><span class="glyphicon glyphicon-eye-open"></span>View</a>
-                    <a href="@Url.Action("Remove", new { id=item.AgentId })"><span class="glyphicon glyphicon-eye-remove"></span>Remove</a>
+                    <a href="@Url.Action("Edit", new { id=item.AgentId })"><span class="glyphicon glyphicon-pencil"></span>Edit</a>
+                    <a href="@Url.Action("Remove", new { id=item.AgentId })"><span class="glyphicon glyphicon-remove"></span>Remove</a>
                 </td>
                 <td>@item.WorldName</td>
             </tr>

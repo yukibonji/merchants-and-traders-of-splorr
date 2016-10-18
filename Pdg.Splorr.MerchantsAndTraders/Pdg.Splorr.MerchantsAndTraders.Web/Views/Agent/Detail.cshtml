@@ -1,0 +1,21 @@
+﻿@model Pdg.Splorr.MerchantsAndTraders.DataLayer.Agent
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Property</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@Html.DisplayNameFor(m=>m.AgentName)</td>
+            <td>@Model.AgentName</td>
+        </tr>
+        <tr>
+            <td>@Html.DisplayNameFor(m => m.WorldId)</td>
+            <td>@Model.WorldId</td>
+        </tr>
+    </tbody>
+</table>
+<a href="@Url.Action("Index","Agent")"><span class="glyphicon glyphicon-arrow-left"></span>Back To List</a>
