@@ -69,6 +69,12 @@
     <Build Include="dbo\Tables\__MigrationHistory.sql" />
     <Build Include="dbo\Tables\Worlds.sql" />
     <Build Include="dbo\Tables\Agents.sql" />
+    <Build Include="dbo\Tables\Sites.sql" />
+    <Build Include="dbo\Tables\Routes.sql" />
+    <Build Include="dbo\Tables\Workers.sql" />
+    <Build Include="dbo\Tables\WorkerStates.sql" />
+    <Build Include="dbo\Tables\WorkerSiteStates.sql" />
+    <Build Include="dbo\Tables\WorkerRouteStates.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="Pdg.Splorr.MerchantsAndTraders.Database.refactorlog" />

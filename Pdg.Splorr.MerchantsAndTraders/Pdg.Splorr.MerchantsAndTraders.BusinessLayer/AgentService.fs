@@ -15,6 +15,7 @@ module AgentService =
 
     let private verifyAgentCreatable (agent:Agent) (context:MaToSplorrProvider.dataContext) :ServiceResult<MaToSplorrProvider.dataContext> =
         if AgentRepository.existsForUserAndWorld agent.UserId agent.WorldId context |> not then
+            //TODO: agent name must be unique for world!
             Success context
         else
             Failure ["Agent already exists for that user and world!"]
@@ -77,4 +78,5 @@ module AgentService =
         createContext()
         >>= verifyUserExists agent.UserId
         >>= verifyAgentExists agent.UserId agent.AgentId
+        //TODO: agent name must be unique for world!
         >>= updateAgent agent

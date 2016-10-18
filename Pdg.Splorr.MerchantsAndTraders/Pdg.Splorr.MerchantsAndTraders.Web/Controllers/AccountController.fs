@@ -41,28 +41,13 @@ type internal ChallengeResult(provider:string, redirectUri:string, userId:string
 type AccountController() =
     inherit Controller()
 
-    [<DefaultValue>]val mutable _signInManager: ApplicationSignInManager
-    [<DefaultValue>]val mutable _userManager: ApplicationUserManager
-
     member this.SignInManager 
         with public get() = 
-            if this._signInManager<> null then 
-                this._signInManager 
-            else 
                 this.HttpContext.GetOwinContext().Get<ApplicationSignInManager>()
-
-        and private set value = 
-            this._signInManager <- value
 
     member this.UserManager 
         with public get() = 
-            if this._userManager <> null then 
-                this._userManager 
-            else 
                 this.HttpContext.GetOwinContext().Get<ApplicationUserManager>()
-
-        and private set value = 
-            this._userManager <- value
 
     [<AllowAnonymous>]
     member this.Login (returnUrl:string) : ActionResult =
@@ -335,16 +320,4 @@ type AccountController() =
     [<AllowAnonymous>]
     member this.ExternalLoginFailure() : ActionResult =
         this.View() :> ActionResult
-
-    override this.Dispose(disposing:bool):unit =
-        if disposing then
-            if this._userManager <> null then
-                this._userManager.Dispose()
-                this._userManager <- null
-
-            if this._signInManager <> null then
-                this._signInManager.Dispose()
-                this._signInManager <- null
-
-        base.Dispose(disposing)
 

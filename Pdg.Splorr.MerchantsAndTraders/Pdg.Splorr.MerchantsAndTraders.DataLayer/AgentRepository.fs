@@ -1,5 +1,6 @@
 ﻿namespace Pdg.Splorr.MerchantsAndTraders.DataLayer
 
+open FSharp.Data.Sql
 open System.Linq
 
 type AgentListItem =
@@ -18,18 +19,26 @@ module AgentRepository =
     let fetchList (userId: string) (context:MaToSplorrProvider.dataContext) :IQueryable<AgentListItem> =
         query{
             for agent in context.Dbo.Agents do
-            join world in context.Dbo.Worlds on (agent.WorldId=world.WorldId)
+            for world in agent.``dbo.Worlds by WorldId`` do
             where (agent.UserId=userId)
             select ({AgentListItem.AgentId = agent.AgentId; WorldId=agent.WorldId; WorldName = world.WorldName;AgentName=agent.AgentName})
         }
 
+    let mapAgent (dbRecord:MaToSplorrProvider.dataContext.``dbo.AgentsEntity``) : Agent =
+        { AgentId   = dbRecord.AgentId;
+          AgentName = dbRecord.AgentName;
+          WorldId   = dbRecord.WorldId;
+          UserId    = dbRecord.UserId }
+
     let fetchOne (agentId:int) (context:MaToSplorrProvider.dataContext) : Agent =
-        query{
-            for agent in context.Dbo.Agents do
-            where (agent.AgentId=agentId)
-            select({Agent.AgentId=agent.AgentId;AgentName=agent.AgentName;WorldId=agent.WorldId;UserId=agent.UserId})
-        }
-        |> Seq.exactlyOne
+        let result = 
+            query{
+                for agent in context.Dbo.Agents do
+                where (agent.AgentId=agentId)
+                select(agent)
+                exactlyOne
+            }
+        result.MapTo<Agent>()
 
     let exists (agentId:int) (context:MaToSplorrProvider.dataContext) : bool =
         query{
@@ -42,10 +51,8 @@ module AgentRepository =
     let existsForUserAndWorld (userId:string) (worldId:int) (context:MaToSplorrProvider.dataContext) : bool =
         query{
             for agent in context.Dbo.Agents do
-            where (agent.UserId = userId && agent.WorldId = worldId)
-            select (agent.AgentId)
+            exists (agent.UserId = userId && agent.WorldId = worldId)
         }
-        |> Seq.exists(fun e->true)
 
     let create (agent:Agent) (context:MaToSplorrProvider.dataContext) : Agent =
         let row = context.Dbo.Agents.Create()
