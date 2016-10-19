@@ -60,7 +60,7 @@ type Global() =
         routes.MapRoute(
             "Default", // Route name
             "{controller}/{action}/{id}", // URL with parameters
-            { controller = "Home"; action = "Index"; id = UrlParameter.Optional } // Parameter defaults
+            { controller = "Agent"; action = "Index"; id = UrlParameter.Optional } // Parameter defaults
         ) |> ignore
 
     member x.Application_Start() =
