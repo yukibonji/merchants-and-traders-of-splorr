@@ -5,7 +5,8 @@
     [SiteX] FLOAT NOT NULL, 
     [SiteY] FLOAT NOT NULL, 
 	[WorldId] INT NOT NULL,
-	CONSTRAINT PK_Sites PRIMARY KEY([SiteId],[WorldId]),
+	CONSTRAINT PK_Sites PRIMARY KEY([SiteId]),
+	CONSTRAINT UQ_Sites_SiteId_WorldId UNIQUE([SiteId],[WorldId]),
 	CONSTRAINT FK_Sites_Worlds FOREIGN KEY ([WorldId]) REFERENCES Worlds(WorldId),
 	CONSTRAINT UQ_Sites_WorldId_SiteName UNIQUE([WorldId],[SiteName]),
 	CONSTRAINT UQ_Sites_WorldId_SiteX_SiteY UNIQUE([WorldId],[SiteX],[SiteY])

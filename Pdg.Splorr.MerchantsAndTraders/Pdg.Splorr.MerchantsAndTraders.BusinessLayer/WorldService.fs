@@ -9,13 +9,12 @@ open Utility
 
 module WorldService =
             
-    let private retrieveWorldList (context:MaToSplorrProvider.dataContext) :ServiceListResult<WorldListItem> =
+    let private retrieveWorldList (context:MaToSplorrProvider.dataContext) :ServiceListResult<World> =
         context
         |> WorldRepository.fetchList
-        |> toEnumerable
         |> Success
 
-    let private retrieveAvailableWorldList (userId:string) (context:MaToSplorrProvider.dataContext) : ServiceListResult<WorldListItem> =
+    let private retrieveAvailableWorldList (userId:string) (context:MaToSplorrProvider.dataContext) : ServiceListResult<World> =
         let currentWorlds =
             context
             |> AgentRepository.fetchList userId
@@ -26,12 +25,12 @@ module WorldService =
         |> Seq.filter(fun e->currentWorlds.Contains(e.WorldId) |> not)
         |> Success
 
-    let retrieveList (userId:string) : ServiceListResult<WorldListItem> =
+    let retrieveList (userId:string) : ServiceListResult<World> =
         createContext()
         >>= verifyUserExists userId
         >>= retrieveWorldList
 
-    let retrieveAvailableList (userId:string) : ServiceListResult<WorldListItem> =
+    let retrieveAvailableList (userId:string) : ServiceListResult<World> =
         createContext()
         >>= verifyUserExists userId
         >>= retrieveAvailableWorldList userId

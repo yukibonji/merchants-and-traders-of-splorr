@@ -28,7 +28,10 @@ module SiteRepository =
                 select (site)
                 exactlyOne
             }
-        result.MapTo<Site>()
+        { SiteId = result.SiteId;
+          SiteName = result.SiteName;
+          WorldId = result.WorldId;
+          Position = {X = result.SiteX; Y = result.SiteY} }
 
     let create (site:Site) (context:MaToSplorrProvider.dataContext) : Site =
         let row = context.Dbo.Sites.Create()
@@ -40,7 +43,8 @@ module SiteRepository =
 
         context.SubmitUpdates()
 
-        fetchOne row.SiteId context
+        context
+        |> fetchOne row.SiteId
 
     let fetchForWorld (worldId:int)  (context:MaToSplorrProvider.dataContext) : seq<Site> =
         let result =
