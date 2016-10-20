@@ -51,7 +51,7 @@ let main argv =
 
     let positions =
         generate (fun () -> positionGenerator random 250.0 250.0) (positionSieve 10.0) (positionThresholdCheck 5000) (0,Set.empty)
-        |> Set.toList
+        |> Set.toSeq
 
     let names = 
         generate 
@@ -59,8 +59,8 @@ let main argv =
             (fun x->(<>) x)
             (nameThresholdCheck (positions|> Seq.length))
             (0, Set.empty)
-        |> Set.toList
-        |> List.sortBy (fun x->random.Next())
+        |> Set.toSeq
+        |> Seq.sortBy (fun x->random.Next())
 
     let context = Context.create()
 
@@ -68,9 +68,10 @@ let main argv =
         context
         |> WorldRepository.create {WorldId =0; WorldName=randomName();CreatedOn=DateTimeOffset.MinValue}
 
-    let sites =
-        List.zip names positions
-        |> List.map (fun (n,p) ->{Site.SiteId = 0; WorldId = world.WorldId; SiteName = n; Position = p})
-        |> List.map (fun s -> SiteRepository.create s context)
+    Seq.zip names positions
+    |> Seq.map (fun (n,p) ->{Site.SiteId = 0; WorldId = world.WorldId; SiteName = n; Position = p})
+    |> Seq.map (fun s -> SiteRepository.create s context)
+    |> Seq.toList
+    |> ignore
 
     0
