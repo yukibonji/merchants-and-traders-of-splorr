@@ -14,7 +14,7 @@ type Site =
       WorldId: int }
 
 module SiteRepository =
-    let mapSite (dbRecord: MaToSplorrProvider.dataContext.``dbo.SitesEntity``) : Site =
+    let private mapSite (dbRecord: MaToSplorrProvider.dataContext.``dbo.SitesEntity``) : Site =
         { SiteId = dbRecord.SiteId;
           SiteName = dbRecord.SiteName;
           WorldId = dbRecord.WorldId;
@@ -28,10 +28,8 @@ module SiteRepository =
                 select (site)
                 exactlyOne
             }
-        { SiteId = result.SiteId;
-          SiteName = result.SiteName;
-          WorldId = result.WorldId;
-          Position = {X = result.SiteX; Y = result.SiteY} }
+        result
+        |> mapSite
 
     let create (site:Site) (context:MaToSplorrProvider.dataContext) : Site =
         let row = context.Dbo.Sites.Create()

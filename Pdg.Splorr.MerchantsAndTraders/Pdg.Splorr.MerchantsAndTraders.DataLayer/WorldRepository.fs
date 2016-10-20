@@ -9,9 +9,6 @@ type World =
     CreatedOn:DateTimeOffset}
 
 module WorldRepository =
-    let mapWorld (dbRecord: MaToSplorrProvider.dataContext.``dbo.WorldsEntity``) : World =
-        {World.WorldId=dbRecord.WorldId;WorldName=dbRecord.WorldName;CreatedOn=dbRecord.CreatedOn}
-
     let fetchList (context:MaToSplorrProvider.dataContext) : seq<World> =
         query{
             for world in context.Dbo.Worlds do

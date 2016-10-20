@@ -47,10 +47,12 @@ let nameThresholdCheck (numberRequired:int) (count:int, current:Set<'T>) :bool =
 [<EntryPoint>]
 let main argv = 
     let random = Random()
+    let randomName () = nameGenerator random (fun r->r.Next(4)+r.Next(4)+r.Next(4)+3) (fun r->r.Next(2)=1) ["a";"e";"i";"o";"u"] ["h";"k";"l";"m";"p"]
+
     let positions =
         generate (fun () -> positionGenerator random 250.0 250.0) (positionSieve 10.0) (positionThresholdCheck 5000) (0,Set.empty)
         |> Set.toList
-    let randomName () = nameGenerator random (fun r->r.Next(4)+r.Next(4)+r.Next(4)+3) (fun r->r.Next(2)=1) ["a";"e";"i";"o";"u"] ["h";"k";"l";"m";"p"]
+
     let names = 
         generate 
             (randomName)
@@ -59,9 +61,6 @@ let main argv =
             (0, Set.empty)
         |> Set.toList
         |> List.sortBy (fun x->random.Next())
-
-
-
 
     let context = Context.create()
 

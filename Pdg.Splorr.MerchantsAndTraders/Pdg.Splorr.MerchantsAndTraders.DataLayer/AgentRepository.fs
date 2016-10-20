@@ -24,12 +24,6 @@ module AgentRepository =
             select ({AgentListItem.AgentId = agent.AgentId; WorldId=agent.WorldId; WorldName = world.WorldName;AgentName=agent.AgentName})
         }
 
-    let mapAgent (dbRecord:MaToSplorrProvider.dataContext.``dbo.AgentsEntity``) : Agent =
-        { AgentId   = dbRecord.AgentId;
-          AgentName = dbRecord.AgentName;
-          WorldId   = dbRecord.WorldId;
-          UserId    = dbRecord.UserId }
-
     let fetchOne (agentId:int) (context:MaToSplorrProvider.dataContext) : Agent =
         let result = 
             query{
