@@ -43,7 +43,6 @@ let nameGenerator (random:Random) (lengthGenerator:Random->int) (vowelGenerator:
 let nameThresholdCheck (numberRequired:int) (count:int, current:Set<'T>) :bool =
     current.Count >= numberRequired
 
-
 [<EntryPoint>]
 let main argv = 
     let random = Random()
@@ -68,10 +67,29 @@ let main argv =
         context
         |> WorldRepository.create {WorldId =0; WorldName=randomName();CreatedOn=DateTimeOffset.MinValue}
 
-    Seq.zip names positions
-    |> Seq.map (fun (n,p) ->{Site.SiteId = 0; WorldId = world.WorldId; SiteName = n; Position = p})
-    |> Seq.map (fun s -> SiteRepository.create s context)
-    |> Seq.toList
-    |> ignore
+    let sites =
+        Seq.zip names positions
+        |> Seq.map (fun (n,p) ->{Site.SiteId = 0; WorldId = world.WorldId; SiteName = n; Position = p})
+        |> Seq.map (fun s -> SiteRepository.create s context)
+        |> Seq.toList //flush!
+
+    let distance2 (from:Site) (``to``:Site) : float =
+        (from.Position.X - ``to``.Position.X) * (from.Position.X - ``to``.Position.X) + (from.Position.Y - ``to``.Position.Y) * (from.Position.Y - ``to``.Position.Y)
+
+    let routes =
+        sites
+        |> Seq.map 
+            (fun from -> 
+                sites
+                |> Seq.sortBy (distance2 from)
+                |> Seq.skip 1 //the first one is the same as 'from' with a distance of 0
+                |> Seq.take 3
+                |> Seq.map (fun x->if from.SiteId < x.SiteId then (from.SiteId,x.SiteId) else (x.SiteId,from.SiteId))
+                |> Set.ofSeq)
+        |> Seq.reduce (Set.union)
+        |> Seq.map(fun (fromId,toId) -> {Route.WorldId = world.WorldId; FromSiteId = fromId; ToSiteId = toId; RouteId = 0})
+        |> Seq.map(fun route -> RouteRepository.create route context)
+        |> Seq.toList //flush!
+
 
     0

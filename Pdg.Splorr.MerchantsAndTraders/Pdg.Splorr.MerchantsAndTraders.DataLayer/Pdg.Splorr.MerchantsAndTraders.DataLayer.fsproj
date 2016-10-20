@@ -58,6 +58,7 @@
     <Compile Include="AgentRepository.fs" />
     <Compile Include="UserRepository.fs" />
     <Compile Include="SiteRepository.fs" />
+    <Compile Include="RouteRepository.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data.SqlProvider">
