@@ -59,6 +59,7 @@
     <Compile Include="UserRepository.fs" />
     <Compile Include="SiteRepository.fs" />
     <Compile Include="RouteRepository.fs" />
+    <Compile Include="WorkerRepository.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data.SqlProvider">
