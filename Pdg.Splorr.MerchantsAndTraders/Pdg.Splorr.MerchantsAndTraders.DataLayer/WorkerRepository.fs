@@ -127,3 +127,38 @@ module WorkerRepository =
             select (agentWorker)
         }        
         |> Seq.map (mapAgentWorkerListItem)
+
+    let setAgent (agentId:int option) (workerId:int) (context:MaToSplorrProvider.dataContext) : unit =
+        let agentWorkerExists = 
+            query{
+                for agentWorker in context.Dbo.AgentWorkers do
+                exists (agentWorker.WorkerId = workerId)
+            }
+        match agentWorkerExists, agentId with
+        | false, Some id ->
+            let worker = context |> fetchOne workerId
+            let row = context.Dbo.AgentWorkers.Create()
+            row.AgentId <- id
+            row.WorkerId <- workerId
+            row.WorldId <- worker.WorldId
+            context.SubmitUpdates()
+        | true, None ->
+            let row = 
+                query {
+                    for agentWorker in context.Dbo.AgentWorkers do 
+                    where (agentWorker.WorkerId = workerId)
+                    select (agentWorker)
+                    exactlyOne}
+            row.Delete()
+            context.SubmitUpdates()
+        | true, Some id ->
+            let row = 
+                query {
+                    for agentWorker in context.Dbo.AgentWorkers do 
+                    where (agentWorker.WorkerId = workerId)
+                    select (agentWorker)
+                    exactlyOne}
+            if row.AgentId <> id then
+                row.AgentId <- id
+                context.SubmitUpdates()
+        | _ -> ()

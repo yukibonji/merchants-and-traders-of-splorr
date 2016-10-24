@@ -141,7 +141,13 @@ type AgentController() =
         if this.ModelState.IsValid |> not then
             this.View(model) :> ActionResult
         else
-            this.View(model) :> ActionResult
+            match (this.User.Identity.GetUserId(), model.AgentId, model.WorkerName) |||> WorkerService.createWorkerForAgent with
+            | ServiceResult.Success worker ->
+                let rvd = new RouteValueDictionary()
+                rvd.Add("id",worker.WorkerId)
+                this.RedirectToAction("Detail","Worker",rvd) :> ActionResult
+            | ServiceResult.Failure messages ->
+                this.View("Error", messages) :> ActionResult
         
 
 
