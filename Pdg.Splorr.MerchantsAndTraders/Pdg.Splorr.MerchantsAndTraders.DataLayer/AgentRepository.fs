@@ -21,7 +21,7 @@ module AgentRepository =
             for agent in context.Dbo.Agents do
             for world in agent.``dbo.Worlds by WorldId`` do
             where (agent.UserId=userId)
-            select ({AgentListItem.AgentId = agent.AgentId; WorldId=agent.WorldId; WorldName = world.WorldName;AgentName=agent.AgentName})
+            select ({AgentListItem.AgentId = agent.AgentId; WorldId=agent.WorldId; WorldName = world.WorldName;AgentName=agent.AgentName})//TODO: make this a view
         }
 
     let fetchOne (agentId:int) (context:MaToSplorrProvider.dataContext) : Agent =
@@ -41,6 +41,12 @@ module AgentRepository =
             select(agent.AgentId)
         }
         |> Seq.exists(fun e->true)
+
+    let existsForUser (userId:string) (context:MaToSplorrProvider.dataContext) : bool =
+        query{
+            for agent in context.Dbo.Agents do
+            exists (agent.UserId = userId)
+        }
 
     let existsForUserAndWorld (userId:string) (worldId:int) (context:MaToSplorrProvider.dataContext) : bool =
         query{

@@ -133,6 +133,8 @@
     <Compile Include="Models\AccountViewModels.fs" />
     <Compile Include="Models\AgentModels.fs" />
     <Compile Include="Models\ConfirmDeleteModel.fs" />
+    <Compile Include="Models\AgentWorkerModel.fs" />
+    <Compile Include="Models\WorkerModels.fs" />
     <Compile Include="Controllers\PayloadProcess.fs" />
     <Compile Include="Controllers\HomeController.fs" />
     <Compile Include="Controllers\AccountController.fs" />
@@ -156,6 +158,8 @@
     <Content Include="Views\Agent\Remove.cshtml" />
     <Content Include="Views\Agent\Detail.cshtml" />
     <Content Include="Views\Agent\Edit.cshtml" />
+    <Content Include="Views\Agent\WorkerList.cshtml" />
+    <Content Include="Views\Agent\AddWorker.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />

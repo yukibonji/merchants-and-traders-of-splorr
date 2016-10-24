@@ -1,0 +1,34 @@
+﻿@model IEnumerable<Pdg.Splorr.MerchantsAndTraders.Web.Models.AgentWorkerModel>
+
+@{
+    Layout = null;
+}
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Worker Name</th>
+            <th>Activity</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var worker in Model)
+        {
+            <tr>
+                <td>@worker.WorkerName</td>
+                <td>
+                    @worker.Location
+                </td>
+            </tr>
+        }
+        @if(!Model.Any())
+        {
+            <tr>
+                <td colspan="2">
+                    <a href="@Url.Action("AddWorker", new { id= ViewBag.AgentId })"><span class="glyphicon glyphicon-plus"></span>New Worker</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

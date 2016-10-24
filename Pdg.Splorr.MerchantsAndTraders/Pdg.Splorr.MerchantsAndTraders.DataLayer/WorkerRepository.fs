@@ -3,10 +3,15 @@
 open System
 open System.Linq
 
+type WorkerRouteState =
+    {RouteId:int;
+    Reversed:bool;
+    CompletesOn:DateTimeOffset}
+
 [<RequireQualifiedAccess>]
 type WorkerState =
     |Site of int
-    |Route of int
+    |Route of WorkerRouteState
 
 type Worker =
     {WorkerId:int;
@@ -14,7 +19,42 @@ type Worker =
     WorldId:int;
     WorkerState:WorkerState}
 
+type SiteDisplayState =
+    {SiteId:int;
+    SiteName:string}
+
+type OnRouteDisplayState =
+    {From: SiteDisplayState;
+    To:SiteDisplayState;
+    CompletesOn:DateTimeOffset}
+
+type WorkerDisplayState =
+    | AtSite of SiteDisplayState
+    | OnRoute of OnRouteDisplayState
+
+type AgentWorker =
+    {AgentId:int;
+    WorkerId:int;
+    WorkerName:string;
+    DisplayState: WorkerDisplayState}
+    
+
 module WorkerRepository =
+    let fetchAgentId (workerId: int) (context:MaToSplorrProvider.dataContext) : int option =
+        let result =
+            query{
+                for agentWorker in context.Dbo.AgentWorkers do
+                where (agentWorker.WorkerId=workerId)
+                select (agentWorker.AgentId)
+                exactlyOneOrDefault
+            }
+        if result=0 then None else Some result
+
+    let mapRouteState (dbRecord:MaToSplorrProvider.dataContext.``dbo.WorkerRouteStatesEntity``) :WorkerRouteState =
+        {RouteId = dbRecord.RouteId;
+        Reversed = dbRecord.Reversed;
+        CompletesOn = dbRecord.CompletesOn}
+
     let mapWorker (dbRecord:MaToSplorrProvider.dataContext.``dbo.WorkersEntity``) : Worker =
         { WorkerId = dbRecord.WorkerId;
           WorkerName = dbRecord.WorkerName;
@@ -25,7 +65,8 @@ module WorkerRepository =
                 dbRecord.``dbo.WorkerSiteStates by WorkerId``.First().SiteId
                 |> WorkerState.Site
             | _ -> //really just 2 at this point
-                dbRecord.``dbo.WorkerRouteStates by WorkerId``.First().RouteId
+                dbRecord.``dbo.WorkerRouteStates by WorkerId``.First()
+                |> mapRouteState
                 |> WorkerState.Route }
 
     let fetchOne (workerId:int) (context:MaToSplorrProvider.dataContext) : Worker =
@@ -44,9 +85,11 @@ module WorkerRepository =
             siteRow.SiteId <- siteId
             siteRow.WorkerId <- worker.WorkerId
             context.SubmitUpdates()
-        | WorkerState.Route routeId -> 
+        | WorkerState.Route routeState -> 
             let routeRow = context.Dbo.WorkerRouteStates.Create()
-            routeRow.RouteId <- routeId
+            routeRow.RouteId <- routeState.RouteId
+            routeRow.Reversed <- routeState.Reversed
+            routeRow.CompletesOn <- routeState.CompletesOn
             routeRow.WorkerId <- worker.WorkerId
             context.SubmitUpdates()
 
@@ -65,3 +108,22 @@ module WorkerRepository =
 
         context
         |> fetchOne workerRow.WorkerId
+
+    let private mapAgentWorkerListItem (agentWorker:MaToSplorrProvider.dataContext.``dbo.AgentWorkerListItemsEntity``) : AgentWorker =
+        {AgentWorker.AgentId = agentWorker.AgentId;
+        WorkerId = agentWorker.WorkerId;
+        WorkerName = agentWorker.WorkerName;
+        DisplayState = 
+            match agentWorker.WorkerStateId with
+            | 1 ->
+                {SiteDisplayState.SiteId = agentWorker.AtSiteId.Value; SiteName = agentWorker.AtSiteName.Value} |> AtSite
+            | _ -> 
+                {OnRouteDisplayState.From = {SiteDisplayState.SiteId = agentWorker.FromSiteId.Value; SiteName = agentWorker.FromSiteName.Value}; To= {SiteDisplayState.SiteId = agentWorker.ToSiteId.Value; SiteName = agentWorker.ToSiteName.Value}; CompletesOn = agentWorker.CompletesOn.Value} |> OnRoute}
+
+    let fetchForAgent (agentId:int) (context:MaToSplorrProvider.dataContext) : seq<AgentWorker> =
+        query{
+            for agentWorker in context.Dbo.AgentWorkerListItems do
+            where (agentWorker.AgentId = agentId)
+            select (agentWorker)
+        }        
+        |> Seq.map (mapAgentWorkerListItem)

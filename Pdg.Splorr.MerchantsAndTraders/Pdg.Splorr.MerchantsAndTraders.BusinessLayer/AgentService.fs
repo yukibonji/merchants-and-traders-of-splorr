@@ -20,16 +20,6 @@ module AgentService =
         else
             Failure ["Agent already exists for that user and world!"]
 
-    let private verifyAgentExists (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
-        if AgentRepository.exists agentId context then
-            let agent = AgentRepository.fetchOne agentId context
-            if agent.UserId = userId then
-                Success context
-            else
-                Failure ["Agent not found!"]
-        else
-            Failure ["Agent not found!"]
-
     let private createAgent (agent:Agent) (context:MaToSplorrProvider.dataContext) : ServiceResult<Agent> =
         context
         |> AgentRepository.create agent

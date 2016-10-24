@@ -15,6 +15,16 @@ module internal Utility =
     let internal toEnumerable (queryable: IQueryable<'T>) :IEnumerable<'T> =
         queryable.AsEnumerable()
 
+    let internal verifyAgentExists (userId:string) (agentId:int) (context:MaToSplorrProvider.dataContext) : ServiceResult<MaToSplorrProvider.dataContext> =
+        if AgentRepository.exists agentId context then
+            let agent = AgentRepository.fetchOne agentId context
+            if agent.UserId = userId then
+                Success context
+            else
+                Failure ["Agent not found!"]
+        else
+            Failure ["Agent not found!"]
+
     let internal verifyUserExists (userId:string) (context:MaToSplorrProvider.dataContext):ServiceResult<MaToSplorrProvider.dataContext> =
         if UserRepository.exists userId context then
             Success context

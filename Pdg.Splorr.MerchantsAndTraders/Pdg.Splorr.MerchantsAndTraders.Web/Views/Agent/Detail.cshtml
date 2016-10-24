@@ -1,5 +1,5 @@
 ﻿@model Pdg.Splorr.MerchantsAndTraders.DataLayer.Agent
-
+<a href="@Url.Action("Index","Agent")"><span class="glyphicon glyphicon-arrow-left"></span>Back To List</a>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -18,4 +18,7 @@
         </tr>
     </tbody>
 </table>
-<a href="@Url.Action("Index","Agent")"><span class="glyphicon glyphicon-arrow-left"></span>Back To List</a>
+@{
+    Html.RenderAction("WorkerList", new { id = Model.AgentId });
+}
+

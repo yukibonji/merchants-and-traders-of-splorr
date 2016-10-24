@@ -1,0 +1,13 @@
+﻿@model Pdg.Splorr.MerchantsAndTraders.Web.Models.NewWorkerModel
+
+@using (Html.BeginForm("AddWorker", "Agent", FormMethod.Post, new { role = "form" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="form-group">
+        @Html.LabelFor(m => m.WorkerName)
+        @Html.TextBoxFor(m => m.WorkerName, new { @class = "form-control" })
+    </div>
+    <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span>Add</button>
+    <a href="@Url.Action("WorldList","Agent", new { id = Model.AgentId })"><span class="glyphicon glyphicon-arrow-left"></span>Back To List</a>
+}

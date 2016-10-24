@@ -82,6 +82,7 @@ type AgentController() =
     member this.Detail (id:int) : ActionResult =
         match (this.User.Identity.GetUserId(), id) ||> AgentService.retrieve with
         | ServiceResult.Success agent ->
+            //TODO: put list of workers here
             this.View(agent) :> ActionResult
         | ServiceResult.Failure messages ->
             this.RedirectToAction("Index") :> ActionResult
@@ -104,6 +105,42 @@ type AgentController() =
         | ServiceResult.Failure messages ->
             messages
             |> Seq.iter(fun message -> this.ModelState.AddModelError("",message))
+            this.View(model) :> ActionResult
+
+    member this.WorkerList (id:int) : ActionResult =
+        let mapAgentWorker (agentWorker:AgentWorker) : AgentWorkerModel =
+            AgentWorkerModel(
+                AgentId = agentWorker.AgentId,
+                WorkerId = agentWorker.WorkerId,
+                WorkerName = agentWorker.WorkerName,
+                Location = 
+                    match agentWorker.DisplayState with
+                    | AtSite atSite ->
+                        atSite.SiteName
+                        |> sprintf "At Site: '%s'"
+                    | OnRoute onRoute ->
+                        (onRoute.From.SiteName, onRoute.To.SiteName)
+                        ||> sprintf "On Route: from '%s' to '%s'"
+            )
+
+
+        match (this.User.Identity.GetUserId(), id) ||> WorkerService.retrieveListForAgent with
+        | ServiceResult.Success workers ->
+            this.ViewData.Add("AgentId", id)
+            this.View(workers |> Seq.map mapAgentWorker) :> ActionResult
+        | ServiceResult.Failure messages ->
+            this.View("Error", messages) :> ActionResult
+        
+    [<HttpGet>]
+    member this.AddWorker (id:int) : ActionResult =
+        this.View(NewWorkerModel(AgentId = id)) :> ActionResult
+
+    [<HttpPost>]
+    [<ValidateAntiForgeryToken>]
+    member this.AddWorker(model:NewWorkerModel) : ActionResult =
+        if this.ModelState.IsValid |> not then
+            this.View(model) :> ActionResult
+        else
             this.View(model) :> ActionResult
         
 
