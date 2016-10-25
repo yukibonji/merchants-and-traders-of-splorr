@@ -84,6 +84,7 @@ module WorkerRepository =
             let siteRow = context.Dbo.WorkerSiteStates.Create()
             siteRow.SiteId <- siteId
             siteRow.WorkerId <- worker.WorkerId
+            siteRow.WorldId <- worker.WorldId
             context.SubmitUpdates()
         | WorkerState.Route routeState -> 
             let routeRow = context.Dbo.WorkerRouteStates.Create()
@@ -91,6 +92,7 @@ module WorkerRepository =
             routeRow.Reversed <- routeState.Reversed
             routeRow.CompletesOn <- routeState.CompletesOn
             routeRow.WorkerId <- worker.WorkerId
+            routeRow.WorldId <- worker.WorldId
             context.SubmitUpdates()
 
     let create (worker:Worker) (context:MaToSplorrProvider.dataContext) : Worker =
@@ -119,6 +121,15 @@ module WorkerRepository =
                 {SiteDisplayState.SiteId = agentWorker.AtSiteId.Value; SiteName = agentWorker.AtSiteName.Value} |> AtSite
             | _ -> 
                 {OnRouteDisplayState.From = {SiteDisplayState.SiteId = agentWorker.FromSiteId.Value; SiteName = agentWorker.FromSiteName.Value}; To= {SiteDisplayState.SiteId = agentWorker.ToSiteId.Value; SiteName = agentWorker.ToSiteName.Value}; CompletesOn = agentWorker.CompletesOn.Value} |> OnRoute}
+
+    let fetchOneForAgent (workerId:int) (context:MaToSplorrProvider.dataContext) : AgentWorker =
+        query{
+            for agentWorker in context.Dbo.AgentWorkerListItems do
+            where (agentWorker.WorkerId = workerId)
+            select (agentWorker)
+            exactlyOne
+        }        
+        |> mapAgentWorkerListItem
 
     let fetchForAgent (agentId:int) (context:MaToSplorrProvider.dataContext) : seq<AgentWorker> =
         query{

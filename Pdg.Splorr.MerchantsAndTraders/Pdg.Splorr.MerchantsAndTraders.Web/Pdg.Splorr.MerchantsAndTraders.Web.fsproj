@@ -139,6 +139,7 @@
     <Compile Include="Controllers\HomeController.fs" />
     <Compile Include="Controllers\AccountController.fs" />
     <Compile Include="Controllers\AgentController.fs" />
+    <Compile Include="Controllers\WorkerController.fs" />
     <Content Include="Views\Web.config" />
     <Content Include="Views\Account\_ExternalLoginsListPartial.cshtml" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />
@@ -160,6 +161,7 @@
     <Content Include="Views\Agent\Edit.cshtml" />
     <Content Include="Views\Agent\WorkerList.cshtml" />
     <Content Include="Views\Agent\AddWorker.cshtml" />
+    <Content Include="Views\Worker\Detail.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />

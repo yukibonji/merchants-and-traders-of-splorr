@@ -53,4 +53,4 @@ module SiteRepository =
             }
 
         result
-        |> Seq.map(fun x->x.MapTo<Site>())
+        |> Seq.map (mapSite)

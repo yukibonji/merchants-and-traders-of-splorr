@@ -61,4 +61,5 @@ module WorkerService =
         >>= selectStartingSite
         >>= createWorkerAtSite workerName
         >>= attachWorkerToAgent agentId
+        
 
